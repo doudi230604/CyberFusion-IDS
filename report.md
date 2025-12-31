@@ -75,8 +75,6 @@ Ce projet compare des approches SL, USL et DL sur plusieurs jeux de données (UN
 | CICIDS2017 | [fichiers]         |             2.8M |                          84 | trafic réel, divers types d'attaques          |
 | TonIoT     | [fichiers]         |            ~650K |                    variable | données IoT, attaques spécifiques IoT        |
 
-> Remplir les colonnes "Fichiers utilisés" et "Taille" avec vos valeurs réelles.
-
 ---
 
 ## 4. Prétraitement (par dataset)
@@ -96,8 +94,6 @@ Exemple (UNSW-NB15):
 - Colonnes retirées: `id`, `src_ip`, `dst_ip`, `timestamp`
 - Opérations: suppression de colonnes inutiles, remplissage des NaN par la médiane, encodage des colonnes catégorielles, standardisation
 - Final: 40 caractéristiques initiales → 20 (Top 20 sélectionnées)
-
-> Note : Ajoutez ici vos décisions et le nombre final de caractéristiques pour chaque dataset.
 
 ---
 
@@ -120,8 +116,6 @@ Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'im
 ### TonIoT — Top 20 (exemple)
 
 1. ...
-
-> Remplacer les listes par les vraies caractéristiques extraites via RandomForest ou méthode choisie.
 
 ---
 
@@ -152,8 +146,6 @@ Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'im
 ---
 
 ## 7. Résultats
-
-> **Instructions**: Remplissez ces tableaux avec les métriques réelles issues de vos expérimentations. Les tables ci‑dessous sont des modèles à compléter.
 
 ### 7.1 UNSW-NB15 — Résultats (All features vs Top 20)
 
@@ -240,7 +232,7 @@ Les scripts et notebooks se trouvent dans le dépôt :
 - `models/decision_tree/decision_treeC.py` — CICIDS2017 specific
 - `models/decision_tree/decision_tree.py` — UNSW-NB15 specific
 
-> Conformément à la consigne IA.docx, le code source n'est pas inclus dans le corps du rapport mais référencé en annexe: vous pouvez copier/joindre les scripts pertinents comme appendice séparé.
+
 
 ---
 
