@@ -1,3 +1,6 @@
+<!-- Page 1: intentionally left blank -->
+
+
 # Mini-projet : Supervised, Unsupervised and Deep Learning for IDS
 
 Student(s): [NOM(S) / Prénom(s)]
@@ -8,7 +11,11 @@ Date: [DD/MM/YYYY]
 
 ---
 
-## Sommaire
+<div style="page-break-after: always;"></div>
+
+<!-- Page 2: Preview of document -->
+
+# Sommaire
 
 1. Introduction
 2. Objectif
@@ -29,7 +36,7 @@ Date: [DD/MM/YYYY]
    - B: Isolation Forest — seuils testés et sélection
    - C: Code (référence aux scripts du dépôt)
 
----
+<div style="page-break-after: always;"></div
 
 ## 1. Introduction
 
@@ -61,11 +68,12 @@ Ce projet compare des approches SL, USL et DL sur plusieurs jeux de données (UN
 
 ## 3. Datasets (tableau)
 
-| Dataset | Fichiers utilisés | Taille (approx.) | Nombre de caractéristiques | Notes (attaques) |
-|---------|-------------------|------------------:|---------------------------:|------------------|
-| UNSW-NB15 | [fichiers] | 2.5M | 49 | mix de classes, multi-catégories (attack_cat) |
-| CICIDS2017 | [fichiers] | 2.8M | 84 | trafic réel, divers types d'attaques |
-| TonIoT | [fichiers] | ~650K | variable | données IoT, attaques spécifiques IoT |
+
+| Dataset    | Fichiers utilisés | Taille (approx.) | Nombre de caractéristiques | Notes (attaques)                               |
+| ---------- | ------------------ | ---------------: | --------------------------: | ---------------------------------------------- |
+| UNSW-NB15  | [fichiers]         |             2.5M |                          49 | mix de classes, multi-catégories (attack_cat) |
+| CICIDS2017 | [fichiers]         |             2.8M |                          84 | trafic réel, divers types d'attaques          |
+| TonIoT     | [fichiers]         |            ~650K |                    variable | données IoT, attaques spécifiques IoT        |
 
 > Remplir les colonnes "Fichiers utilisés" et "Taille" avec vos valeurs réelles.
 
@@ -74,6 +82,7 @@ Ce projet compare des approches SL, USL et DL sur plusieurs jeux de données (UN
 ## 4. Prétraitement (par dataset)
 
 Pour chaque dataset, fournir (texte, pas de code) :
+
 - Fichiers et partitions utilisés (ex : `UNSW_NB15_training-set.csv`)
 - Colonnes supprimées (ex : Flow ID, IP source/destination, timestamp)
 - Nettoyage appliqué (valeurs manquantes traitées par médiane / suppression, conversion types, suppression de valeurs infinies)
@@ -82,6 +91,7 @@ Pour chaque dataset, fournir (texte, pas de code) :
 - Taille finale des caractéristiques (ex : de 49 -> 30 -> Top 20)
 
 Exemple (UNSW-NB15):
+
 - Fichiers: training + testing
 - Colonnes retirées: `id`, `src_ip`, `dst_ip`, `timestamp`
 - Opérations: suppression de colonnes inutiles, remplissage des NaN par la médiane, encodage des colonnes catégorielles, standardisation
@@ -96,16 +106,19 @@ Exemple (UNSW-NB15):
 Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'importance) :
 
 ### UNSW-NB15 — Top 20 (exemple)
+
 1. feature_1
 2. feature_2
-...
-20. feature_20
+   ...
+3. feature_20
 
 ### CICIDS2017 — Top 20 (exemple)
+
 1. feature_a
-...
+   ...
 
 ### TonIoT — Top 20 (exemple)
+
 1. ...
 
 > Remplacer les listes par les vraies caractéristiques extraites via RandomForest ou méthode choisie.
@@ -115,6 +128,7 @@ Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'im
 ## 6. Méthodologie
 
 ### 6.1 Supervised Learning (RF, DT)
+
 - Split : entraînement/test — **Exemple**: 80% train, 20% test, stratifié
 - Validation: cross-validation 5‑fold sur l'ensemble d'entraînement
 - Paramètres (exemples) :
@@ -123,12 +137,14 @@ Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'im
 - Mesures rapportées: Accuracy, Recall (sensibilité), Precision, F1-score, AUC
 
 ### 6.2 Unsupervised Learning (Isolation Forest)
+
 - Entraînement uniquement sur données normales (X_train_normal)
 - Paramètres: contamination (testé), n_estimators=100, random_state=42
 - Sélection du seuil: méthode ROC / Youden's J ou maximisation (tpr - fpr) sur ensemble de validation
 - Rapports: AUC (ROC), seuil choisi, matrice de confusion, précision/recall à ce seuil
 
 ### 6.3 Deep Learning (LSTM)
+
 - Pipeline (voir Annexe A): séquençage des données en fenêtres temporelles (timesteps), normalisation, architecture LSTM
 - Hyperparamètres typiques: timesteps=10/20, batch_size=32, epochs=50, learning_rate=0.001
 - Validation: split validation (20%) ou cross-validation par groupe temporel si nécessaire
@@ -141,14 +157,15 @@ Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'im
 
 ### 7.1 UNSW-NB15 — Résultats (All features vs Top 20)
 
-| Modèle | Features | Accuracy | Precision | Recall | F1-Score | AUC | Commentaires |
-|--------|---------:|---------:|----------:|-------:|---------:|----:|-------------|
-| RandomForest | All | TBD | TBD | TBD | TBD | TBD |  |
-| RandomForest | Top 20 | TBD | TBD | TBD | TBD | TBD |  |
-| DecisionTree | All | TBD | TBD | TBD | TBD | TBD |  |
-| DecisionTree | Top 20 | TBD | TBD | TBD | TBD | TBD |  |
-| IsolationForest | All | TBD | TBD | TBD | TBD | TBD | threshold: TBD |
-| LSTM | All (sequence) | TBD | TBD | TBD | TBD | TBD |  |
+
+| Modèle         |       Features | Accuracy | Precision | Recall | F1-Score | AUC | Commentaires   |
+| --------------- | -------------: | -------: | --------: | -----: | -------: | --: | -------------- |
+| RandomForest    |            All |      TBD |       TBD |    TBD |      TBD | TBD |                |
+| RandomForest    |         Top 20 |      TBD |       TBD |    TBD |      TBD | TBD |                |
+| DecisionTree    |            All |      TBD |       TBD |    TBD |      TBD | TBD |                |
+| DecisionTree    |         Top 20 |      TBD |       TBD |    TBD |      TBD | TBD |                |
+| IsolationForest |            All |      TBD |       TBD |    TBD |      TBD | TBD | threshold: TBD |
+| LSTM            | All (sequence) |      TBD |       TBD |    TBD |      TBD | TBD |                |
 
 ### 7.2 CICIDS2017 — Résultats
 
@@ -170,10 +187,11 @@ Pour chaque dataset ajouter une table listant le Top 20 (ordre décroissant d'im
 - Exemple de valeurs testées (ancre) : [-1.0, -0.5, -0.2, -0.1, 0.0]
 - Table de test — ex :
 
-| Seuil | TPR | FPR | Youden J = TPR-FPR | AUC |
-|-------:|----:|----:|-------------------:|----:|
-| -0.5 | 0.xx | 0.yy | 0.zz | 0.### |
-| -0.3 | ... | ... | ... | ... |
+
+| Seuil |  TPR |  FPR | Youden J = TPR-FPR |   AUC |
+| ----: | ---: | ---: | -----------------: | ----: |
+|  -0.5 | 0.xx | 0.yy |               0.zz | 0.### |
+|  -0.3 |  ... |  ... |                ... |   ... |
 
 - Indiquer seuil retenu et justification (ex : meilleur J)
 
@@ -214,6 +232,7 @@ Texte décrivant la chaîne de traitement **(sans code)** :
 ### Annexe C — Code
 
 Les scripts et notebooks se trouvent dans le dépôt :
+
 - `models/decision_tree/` — decision tree scripts
 - `models/random_forest/` — random forest scripts
 - `models/isolation_forest/` — isolation forest scripts
@@ -231,3 +250,23 @@ Les scripts et notebooks se trouvent dans le dépôt :
 - Option B: I can stop here and you will fill the placeholders manually.
 
 Please reply with one choice: `Fill with results` (attach results or allow run), `Fill placeholders manually` (I leave as-is), or `Make modifications` (specify which parts to change).
+
+---
+
+## Resources Used
+
+- Datasets:
+
+  - UNSW‑NB15 (UNSW Canberra)
+  - CICIDS2017 (Canadian Institute for Cybersecurity)
+  - TON‑IoT dataset
+- Libraries & Tools:
+
+  - Python 3.x, pandas, numpy, scikit-learn, tensorflow/keras, matplotlib, seaborn, joblib
+- References:
+
+  - Liu, Ting, Zhou — Isolation Forest (original paper)
+  - Hochreiter & Schmidhuber — LSTM (original paper)
+  - Additional references / papers used: [add your citations here]
+
+If you'd like, I can also export this report to PDF with the university logo and formatting.
