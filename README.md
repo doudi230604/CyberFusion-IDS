@@ -10,7 +10,7 @@ A small collection of intrusion-detection model scripts and utilities for variou
    python -m venv .venv
    source .venv/bin/activate
    ```
-2. Install dependencies (if you have a `requirements.txt`):
+2. Install dependencies (if you have a requirements.txt):
 
    ```bash
    pip install -r requirements.txt
@@ -23,10 +23,9 @@ A small collection of intrusion-detection model scripts and utilities for variou
 
 ## Folder structure
 
-- `models/decision_tree/` — decision tree model scripts
-- `models/isolation_forest/` — isolation forest scripts
-- `models/random_forest/` — random forest scripts
-- `scripts/` — helper scripts and utilities
-- `package/` — package files (kept for packaging)
+- models/decision_tree/ — decision tree model scripts
+- models/isolation_forest/ — isolation forest scripts
+- models/random_forest/ — random forest scripts
+- scripts/ — helper scripts and utilities
+- package/ — package files (kept for packaging)
 
-> Note: Files were **moved** into these folders (nothing was deleted).

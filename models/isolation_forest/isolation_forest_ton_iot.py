@@ -7,6 +7,19 @@ from sklearn.metrics import (classification_report, confusion_matrix,
                            roc_curve, auc, precision_recall_curve, 
                            average_precision_score)
 import matplotlib.pyplot as plt
+import os
+_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
+os.makedirs(_plots_dir, exist_ok=True)
+_plot_counters = {}
+def _savefig(prefix):
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    fname = f"{prefix}_fig{cnt}.png"
+    path = os.path.join(_plots_dir, fname)
+    plt.savefig(path, bbox_inches='tight', dpi=150)
+    print(f"Saved figure: {path}")
+    plt.close()
+
 import seaborn as sns
 from scipy import stats
 import warnings
@@ -302,8 +315,7 @@ ax6.set_title('Performance Metrics', fontsize=12)
 plt.suptitle(f'Ton_IoT Isolation Forest - {len(X_train_normal):,} Normal Samples', 
              fontsize=16, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.show()
-
+        _savefig('isolation_forest_ton_iot')
 # ===== 10. PERFORMANCE METRICS =====
 print("\n" + "="*60)
 print("📊 PERFORMANCE METRICS")

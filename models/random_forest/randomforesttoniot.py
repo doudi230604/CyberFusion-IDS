@@ -2,6 +2,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+# plots helper
+_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
+os.makedirs(_plots_dir, exist_ok=True)
+_plot_counters = {}
+def _savefig(prefix):
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    fname = f"{prefix}_fig{cnt}.png"
+    path = os.path.join(_plots_dir, fname)
+    plt.savefig(path, bbox_inches='tight', dpi=150)
+    print(f"Saved figure: {path}")
+    plt.close()
+
 from pathlib import Path
 import joblib
 import pickle
@@ -295,7 +309,7 @@ def plot_figure1_confusion_matrix(y_test, y_pred):
     plt.ylabel("True Label", fontsize=12)
     plt.xlabel("Predicted Label", fontsize=12)
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforesttoniot')
 
 def plot_figure2_curves(y_test, y_prob, auc_score):
     """Figure 2: ROC Curve and Precision-Recall Curve"""
@@ -324,7 +338,7 @@ def plot_figure2_curves(y_test, y_prob, auc_score):
     ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforesttoniot')
 
 def plot_figure3_feature_importance(top_n=15):
     """Figure 3: Feature Importance - optimized"""
@@ -349,8 +363,7 @@ def plot_figure3_feature_importance(top_n=15):
     plt.grid(True, axis='x', alpha=0.3)
     
     plt.tight_layout()
-    plt.show()
-    
+    _savefig('randomforesttoniot')
     return top_features
 
 def plot_figure4_prediction_probability(y_test, y_prob):
@@ -378,7 +391,7 @@ def plot_figure4_prediction_probability(y_test, y_prob):
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforesttoniot')
 
 def main():
     """Main function with optimized execution."""
@@ -534,7 +547,7 @@ def ultra_fast_demo():
     plt.legend()
     
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforesttoniot')
     
     print(f"\nResults: Accuracy = {accuracy:.3f}, AUC = {auc_score:.3f}")
 

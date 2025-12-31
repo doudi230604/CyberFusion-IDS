@@ -7,6 +7,19 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_auc_sco
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
+os.makedirs(_plots_dir, exist_ok=True)
+_plot_counters = {}
+def _savefig(prefix):
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    fname = f"{prefix}_fig{cnt}.png"
+    path = os.path.join(_plots_dir, fname)
+    plt.savefig(path, bbox_inches='tight', dpi=150)
+    print(f"Saved figure: {path}")
+    plt.close()
+
 import warnings
 import os
 import joblib
@@ -423,7 +436,7 @@ class UNSWNB15IsolationForest:
         
         plt.suptitle('Isolation Forest Results - UNSW-NB15', fontsize=16, fontweight='bold')
         plt.tight_layout()
-        plt.show()
+        _savefig('isolation_forest_unsw_nb15')
     
     def save_model(self, filepath="isolation_forest_unsw_nb15.pkl"):
         """Save the trained model"""

@@ -1,6 +1,19 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
+os.makedirs(_plots_dir, exist_ok=True)
+_plot_counters = {}
+def _savefig(prefix):
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    fname = f"{prefix}_fig{cnt}.png"
+    path = os.path.join(_plots_dir, fname)
+    plt.savefig(path, bbox_inches='tight', dpi=150)
+    print(f"Saved figure: {path}")
+    plt.close()
+
 import seaborn as sns
 from pathlib import Path
 
@@ -418,7 +431,7 @@ def plot_figure1_confusion_matrix(y_test, y_pred):
     plt.ylabel("True Label", fontsize=12)
     plt.xlabel("Predicted Label", fontsize=12)
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforestcicidi')
 
 def plot_figure2_curves(y_test, y_prob):
     """Figure 2: ROC Curve and Precision-Recall Curve"""
@@ -448,7 +461,7 @@ def plot_figure2_curves(y_test, y_prob):
     ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforestcicidi')
 
 def plot_figure3_feature_importance(top_n=20):
     """Figure 3: Feature Importance"""
@@ -475,8 +488,7 @@ def plot_figure3_feature_importance(top_n=20):
                 f'{importance:.4f}', va='center', fontsize=9)
     
     plt.tight_layout()
-    plt.show()
-    
+    _savefig('randomforestcicidi')
     return top_features
 
 def plot_figure4_prediction_probability(y_test, y_prob):
@@ -513,7 +525,7 @@ def plot_figure4_prediction_probability(y_test, y_prob):
              bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
     
     plt.tight_layout()
-    plt.show()
+    _savefig('randomforestcicidi')
 
 def main():
     print("=" * 60)

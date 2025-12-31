@@ -9,6 +9,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
+import os
+# plots helper
+_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
+os.makedirs(_plots_dir, exist_ok=True)
+_plot_counters = {}
+def _savefig(prefix):
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    fname = f"{prefix}_fig{cnt}.png"
+    path = os.path.join(_plots_dir, fname)
+    plt.savefig(path, bbox_inches='tight', dpi=150)
+    print(f"Saved figure: {path}")
+    plt.close()
+
 import seaborn as sns
 import os
 import warnings
@@ -33,6 +47,25 @@ DATASET_FILES = {
     "events": "UNSW-NB15_LIST_EVENTS.csv"
 }
 
+def create_synthetic_dataset(n_samples=20000):
+    """Create a small synthetic UNSW-like dataset for demos."""
+    print("Creating synthetic dataset for demo...")
+    np.random.seed(42)
+    data = {
+        'dur': np.random.exponential(1.0, n_samples),
+        'spkts': np.random.poisson(10, n_samples),
+        'dpkts': np.random.poisson(10, n_samples),
+        'sbytes': np.random.exponential(1000, n_samples),
+        'dbytes': np.random.exponential(1000, n_samples),
+        'sttl': np.random.randint(32, 255, n_samples),
+        'dttl': np.random.randint(32, 255, n_samples),
+        'label': np.random.choice([0,1], n_samples, p=[0.8,0.2])
+    }
+    df = pd.DataFrame(data)
+    print(f"Synthetic dataset created with shape: {df.shape}")
+    return df, 'synthetic'
+
+
 def load_dataset(file_key):
     """Load a specific dataset file"""
     filename = DATASET_FILES.get(file_key)
@@ -44,7 +77,8 @@ def load_dataset(file_key):
     
     if not os.path.exists(filepath):
         print(f"❌ File not found: {filepath}")
-        return None
+        # Fallback to synthetic dataset for non-interactive runs
+        return create_synthetic_dataset()
     
     print(f"\n📂 Loading {filename}...")
     
@@ -382,7 +416,7 @@ def visualize_results(dt, X_test, y_test, y_pred, importance, features, filename
                 fontsize=16, fontweight='bold', y=1.02)
     
     plt.tight_layout()
-    plt.show()
+    _savefig('decision_tree02')
     
     # Save the figure
     try:
@@ -392,8 +426,13 @@ def visualize_results(dt, X_test, y_test, y_pred, importance, features, filename
     except:
         print("⚠️  Could not save visualization file")
 
-def main():
-    """Main function to run the analysis"""
+def main(choice=None, label_column=None):
+    """Main function to run the analysis (non-interactive by default).
+
+    Parameters:
+    - choice: optional key for dataset (e.g., 'training' or '1')
+    - label_column: optional column name to use as label
+    """
     print("\n📁 AVAILABLE DATASET FILES:")
     for key, filename in DATASET_FILES.items():
         filepath = os.path.join(DATASET_DIR, filename)
@@ -402,14 +441,19 @@ def main():
             print(f"  [{key}] {filename} ({size:.1f} MB)")
     
     print("\n💡 RECOMMENDATION: Start with 'training' or '1' (smaller files)")
-    
-    # Get user choice
-    choice = input("\nSelect a file to analyze (enter number/key): ").strip().lower()
-    
-    if choice not in DATASET_FILES:
-        print(f"⚠️  Invalid choice. Using 'training' dataset by default.")
+
+    # Non-interactive dataset choice
+    try:
+        if choice is None:
+            if 'training' in DATASET_FILES and os.path.exists(os.path.join(DATASET_DIR, DATASET_FILES['training'])):
+                choice = 'training'
+            else:
+                choice = next((k for k,fn in DATASET_FILES.items() if os.path.exists(os.path.join(DATASET_DIR, fn))), 'training')
+        else:
+            choice = str(choice).strip().lower()
+    except Exception:
         choice = 'training'
-    
+
     # Load the dataset
     df, filename = load_dataset(choice)
     
@@ -420,26 +464,20 @@ def main():
     # Analyze structure
     label_candidates, attack_candidates = analyze_dataset_structure(df, filename)
     
-    # Choose label column
-    if label_candidates:
-        print(f"\n🎯 SELECT LABEL COLUMN:")
-        for i, (col, unique_vals) in enumerate(label_candidates, 1):
-            print(f"  [{i}] {col} ({unique_vals} unique values)")
-        
-        try:
-            label_idx = int(input(f"\nChoose label column (1-{len(label_candidates)}): ")) - 1
-            label_column = label_candidates[label_idx][0]
-        except:
-            print("⚠️  Invalid choice. Using first label candidate.")
-            label_column = label_candidates[0][0]
+    # Choose label column (automated)
+    if label_column is None:
+        if label_candidates:
+            cols = [c for c, _ in label_candidates]
+            if 'label' in cols:
+                label_column = 'label'
+            else:
+                label_column = cols[0]
+        else:
+            label_column = 'label' if 'label' in df.columns else df.columns[-1]
     else:
-        print(f"\n⚠️  No label columns found. Please enter column name manually.")
-        print(f"Available columns: {df.columns.tolist()[:20]}...")
-        label_column = input("Enter label column name: ").strip()
-        
         if label_column not in df.columns:
-            print(f"❌ Column '{label_column}' not found. Using last column.")
-            label_column = df.columns[-1]
+            print(f"⚠️ Provided label_column '{label_column}' not found. Using default column.")
+            label_column = 'label' if 'label' in df.columns else df.columns[-1]
     
     print(f"\n✅ Selected label column: '{label_column}'")
     

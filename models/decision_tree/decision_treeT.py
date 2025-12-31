@@ -9,6 +9,19 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
+import os
+_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
+os.makedirs(_plots_dir, exist_ok=True)
+_plot_counters = {}
+def _savefig(prefix):
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    fname = f"{prefix}_fig{cnt}.png"
+    path = os.path.join(_plots_dir, fname)
+    plt.savefig(path, bbox_inches='tight', dpi=150)
+    print(f"Saved figure: {path}")
+    plt.close()
+
 import seaborn as sns
 import os
 import warnings
@@ -476,7 +489,7 @@ plot_tree(dt_model,
           proportion=True)
 plt.title('TON-IoT Decision Tree (First 3 Levels)', fontsize=16, fontweight='bold', pad=20)
 plt.tight_layout()
-plt.show()
+_savefig('decision_treeT')
 
 # 2. Feature Importance
 print("📈 Visualization 2: Feature Importance")
@@ -496,7 +509,7 @@ for i, (bar, imp) in enumerate(zip(bars, top_features['Importance'])):
 
 plt.grid(True, alpha=0.3, axis='x')
 plt.tight_layout()
-plt.show()
+_savefig('decision_treeT')
 
 # 3. Confusion Matrix
 print("📈 Visualization 3: Confusion Matrix")
@@ -510,7 +523,7 @@ plt.title('Confusion Matrix - TON-IoT', fontsize=16, fontweight='bold')
 plt.ylabel('True Label', fontsize=12)
 plt.xlabel('Predicted Label', fontsize=12)
 plt.tight_layout()
-plt.show()
+_savefig('decision_treeT')
 
 # 4. Performance Metrics
 print("📈 Visualization 4: Performance Metrics")
@@ -534,7 +547,7 @@ for idx, (name, value, color) in enumerate(metrics):
 
 plt.suptitle('TON-IoT Model Performance Metrics', fontsize=16, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.show()
+_savefig('decision_treeT')
 
 # 5. Dataset Summary
 print("📈 Visualization 5: Dataset Summary")
@@ -565,7 +578,7 @@ ax2.axis('off')
 
 plt.suptitle('TON-IoT Cybersecurity Analysis', fontsize=16, fontweight='bold', y=1.02)
 plt.tight_layout()
-plt.show()
+_savefig('decision_treeT')
 
 # =============================================================================
 # 9. SAVE RESULTS
