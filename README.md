@@ -10,13 +10,11 @@ A small collection of intrusion-detection model scripts and utilities for variou
    python -m venv .venv
    source .venv/bin/activate
    ```
-
 2. Install dependencies (if you have a `requirements.txt`):
 
    ```bash
    pip install -r requirements.txt
    ```
-
 3. Run a script, for example:
 
    ```bash
@@ -32,10 +30,3 @@ A small collection of intrusion-detection model scripts and utilities for variou
 - `package/` — package files (kept for packaging)
 
 > Note: Files were **moved** into these folders (nothing was deleted).
-
-## Notes & next steps
-
-- If you want imports updated to reflect the new layout, I can update them for you.
-- I can also create a `requirements.txt` or add a more detailed README with examples and usage notes.
-
-If you want changes to this README, tell me what to add or adjust.
