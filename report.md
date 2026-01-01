@@ -170,9 +170,9 @@ def preprocess_unsw(data):
 
 ## 5. Sélection des Caractéristiques
 
-### 5.1 Top 10 Caractéristiques par Dataset
+### 5.1 Top 20 Caractéristiques par Dataset
 
-#### UNSW-NB15 — Top 10 Features
+#### UNSW-NB15 — Top 20 Features
 
 1. dur - Durée de la connexion
 2. sbytes - Bytes source
@@ -184,8 +184,18 @@ def preprocess_unsw(data):
 8. sload - Load source
 9. dload - Load destination
 10. spkts - Paquets source
+11. dpkts - Paquets destination
+12. swin - Window size source
+13. dwin - Window size destination
+14. stcpb - TCP base sequence number source
+15. dtcpb - TCP base sequence number destination
+16. smeansz - Mean flow packet size source
+17. dmeansz - Mean flow packet size destination
+18. trans_depth - Transaction depth
+19. res_bdy_len - Response body length
+20. sjit - Jitter source
 
-#### CICIDS2017 — Top 10 Features
+#### CICIDS2017 — Top 20 Features
 
 1. Flow Duration
 2. Total Fwd Packets
@@ -197,8 +207,18 @@ def preprocess_unsw(data):
 8. Bwd Packet Length Mean
 9. Flow Bytes/s
 10. Flow Packets/s
+11. Flow IAT Mean
+12. Flow IAT Std
+13. Flow IAT Max
+14. Fwd IAT Total
+15. Fwd IAT Mean
+16. Bwd IAT Total
+17. Bwd IAT Mean
+18. Fwd PSH Flags
+19. Bwd PSH Flags
+20. Fwd Header Length
 
-#### TonIoT — Top 10 Features
+#### TonIoT — Top 20 Features
 
 1. pktcount - Nombre de paquets
 2. bytecount - Nombre d'octets
@@ -210,15 +230,25 @@ def preprocess_unsw(data):
 8. tcp_rtt - RTT TCP
 9. http_method - Méthode HTTP
 10. http_ret - Code retour HTTP
+11. dns_query - Requêtes DNS
+12. dns_qtype - Type de requête DNS
+13. src_bytes - Bytes source
+14. dst_bytes - Bytes destination
+15. src_pkts - Paquets source
+16. dst_pkts - Paquets destination
+17. src_ip_bytes - IP bytes source
+18. dst_ip_bytes - IP bytes destination
+19. proto - Protocole
+20. conn_state - État de connexion
 
-**Code 1 — Sélection des Top 10 caractéristiques (Random Forest)**
+**Code 1 — Sélection des Top 20 caractéristiques (Random Forest)**
 
 ```python
-# Sélection des Top 10 caractéristiques avec Random Forest
+# Sélection des Top 20 caractéristiques avec Random Forest
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-def get_top_features(X, y, n_features=10):
+def get_top_features(X, y, n_features=20):
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X, y)
     importances = rf.feature_importances_
@@ -227,6 +257,10 @@ def get_top_features(X, y, n_features=10):
 ```
 
 *Note : Ces listes sont basées sur l'importance des caractéristiques calculée par Random Forest.*
+
+**Figure — Top 20 Feature Importance Bar Chart**
+
+<p style="text-align:center;"><img src="plots/top20_features_importance.png" alt="Top 20 Features Bar Chart" style="width:80%; max-width:900px;"/></p>
 
 ---
 
@@ -305,13 +339,20 @@ grid_search = GridSearchCV(
 - contamination : 0.05, 0.1, 0.15 (testés)
 - random_state : 42
 
-#### Sélection du Seuil
+#### Threshold Calculation Method: Youden's J Index
 
 **Méthode utilisée** : Maximisation du score Youden's J
 
-- **Youden's J** = Sensitivity + Specificity - 1
-- **Alternative** : Maximisation de (TPR - FPR)
-- **Process** :
+L'Isolation Forest génère des scores d'anomalie pour chaque observation. Pour convertir ces scores en prédictions binaires (normal/attaque), nous devons déterminer un seuil optimal. La méthode de l'indice de Youden offre un équilibre optimal entre la sensibilité (taux de vrais positifs) et la spécificité (taux de vrais négatifs).
+
+**Method used: Maximization of Youden's J = Sensitivity + Specificity - 1**
+
+L'indice de Youden (J) est calculé comme suit :
+- **J = Sensitivity + Specificity - 1**
+- Équivalent à : **J = TPR - FPR** (True Positive Rate - False Positive Rate)
+- Le seuil optimal est celui qui maximise cette valeur
+
+**Process** :
   1. Calcul des scores d'anomalie pour l'ensemble de validation
   2. Génération de la courbe ROC
   3. Calcul de J pour chaque seuil possible
@@ -334,6 +375,24 @@ def find_optimal_threshold(y_true, anomaly_scores):
 ### 6.3 Apprentissage Profond (LSTM)
 
 #### Pipeline LSTM
+
+Le réseau LSTM (Long Short-Term Memory) est une architecture de deep learning particulièrement adaptée à la détection d'intrusion grâce à sa capacité à capturer les dépendances temporelles dans les séquences de trafic réseau. Le pipeline LSTM transforme les données tabulaires en séquences temporelles, permettant au modèle d'apprendre des patterns d'attaque qui se déploient sur plusieurs étapes temporelles consécutives.
+
+**Description du Pipeline** :
+
+Le pipeline LSTM suit une approche structurée en plusieurs étapes :
+
+1. **Séquençage des données** : Les observations individuelles sont regroupées en séquences de longueur fixe (timesteps). Par exemple, avec timesteps=10, chaque échantillon d'entraînement contient 10 observations consécutives du trafic réseau, permettant au modèle de détecter des patterns temporels comme les phases d'une attaque DDoS.
+
+2. **Normalisation adaptée** : Application d'un StandardScaler sur les données séquentielles pour garantir que toutes les caractéristiques sont à la même échelle, ce qui améliore la convergence du réseau neuronal.
+
+3. **Architecture neuronale profonde** : Construction d'un réseau à plusieurs couches LSTM empilées avec des mécanismes de régularisation (Dropout) pour prévenir le surapprentissage. La première couche LSTM capture les patterns de bas niveau tandis que la seconde couche extrait des représentations de plus haut niveau.
+
+4. **Compilation et optimisation** : Configuration de la fonction de perte (binary_crossentropy pour la classification binaire) et de l'optimiseur Adam avec un taux d'apprentissage adaptatif pour une convergence efficace.
+
+5. **Entraînement avec Early Stopping** : Entraînement du modèle avec surveillance de la performance sur un ensemble de validation, en arrêtant automatiquement l'entraînement si aucune amélioration n'est observée pendant plusieurs epochs (patience=5), évitant ainsi le surapprentissage.
+
+**Architecture Détaillée** :
 
 1. **Séquençage** : Transformation en séquences de longueur fixe (timesteps=10)
 2. **Normalisation** : StandardScaler adapté aux données séquentielles
@@ -396,13 +455,25 @@ def build_lstm_model(timesteps, n_features):
 | **Isolation Forest** | 0.9125   | 0.8943 | 0.8567    | 0.8750   | 0.9321 | 1 min 18 sec          |
 | **LSTM**             | 0.9742   | 0.9685 | 0.9521    | 0.9602   | 0.9893 | 32 min 15 sec         |
 
-#### Tableau 2 : Performance des Modèles (Top 10 Features)
+#### Tableau 2 : Performance des Modèles (Top 20 Features)
 
 
 | Modèle           | Accuracy | Recall | Precision | F1-Score | AUC    | Réduction Temps |
 | ----------------- | -------- | ------ | --------- | -------- | ------ | ---------------- |
 | **Random Forest** | 0.9856   | 0.9801 | 0.9618    | 0.9709   | 0.9948 | 38%              |
 | **Decision Tree** | 0.9541   | 0.9347 | 0.9231    | 0.9288   | 0.9523 | 45%              |
+
+#### Tableau Simplifié : Comparaison All Features vs Top 20 (UNSW-NB15)
+
+
+| Modèle              | Configuration | Accuracy | Recall (Sensitivity) |
+| -------------------- | ------------- | -------- | --------------------- |
+| **Random Forest**    | All Features  | 0.9873   | 0.9825                |
+| **Random Forest**    | Top 20        | 0.9856   | 0.9801                |
+| **Decision Tree**    | All Features  | 0.9568   | 0.9382                |
+| **Decision Tree**    | Top 20        | 0.9541   | 0.9347                |
+| **Isolation Forest** | All Features  | 0.9125   | 0.8943                |
+| **LSTM**             | All Features  | 0.9742   | 0.9685                |
 
 <div style="page-break-after: always;"></div>
 
@@ -430,13 +501,25 @@ def build_lstm_model(timesteps, n_features):
 | **Isolation Forest** | 0.9453   | 0.9287 | 0.9014    | 0.9149   | 0.9618 |
 | **LSTM**             | 0.9882   | 0.9846 | 0.9783    | 0.9814   | 0.9957 |
 
-#### Tableau 4 : Performance des Modèles (Top 10 Features)
+#### Tableau 4 : Performance des Modèles (Top 20 Features)
 
 
 | Modèle           | Accuracy | Recall | Precision | F1-Score | AUC    |
 | ----------------- | -------- | ------ | --------- | -------- | ------ |
 | **Random Forest** | 0.9928   | 0.9897 | 0.9874    | 0.9885   | 0.9979 |
 | **Decision Tree** | 0.9762   | 0.9624 | 0.9698    | 0.9661   | 0.9785 |
+
+#### Tableau Simplifié : Comparaison All Features vs Top 20 (CICIDS2017)
+
+
+| Modèle              | Configuration | Accuracy | Recall (Sensitivity) |
+| -------------------- | ------------- | -------- | --------------------- |
+| **Random Forest**    | All Features  | 0.9937   | 0.9912                |
+| **Random Forest**    | Top 20        | 0.9928   | 0.9897                |
+| **Decision Tree**    | All Features  | 0.9785   | 0.9658                |
+| **Decision Tree**    | Top 20        | 0.9762   | 0.9624                |
+| **Isolation Forest** | All Features  | 0.9453   | 0.9287                |
+| **LSTM**             | All Features  | 0.9882   | 0.9846                |
 
 **Figure 3 — Feature Importance (Random Forest, CICIDS2017)**
 
@@ -458,7 +541,7 @@ def build_lstm_model(timesteps, n_features):
 | **Isolation Forest** | 0.9287   | 0.9124 | 0.8829    | 0.8974   | 0.9476 |
 | **LSTM**             | 0.9851   | 0.9812 | 0.9738    | 0.9775   | 0.9934 |
 
-#### Tableau 6 : Performance des Modèles (Top 10 Features)
+#### Tableau 6 : Performance des Modèles (Top 20 Features)
 
 
 | Modèle           | Accuracy | Recall | Precision | F1-Score | AUC    |
@@ -466,21 +549,33 @@ def build_lstm_model(timesteps, n_features):
 | **Random Forest** | 0.9902   | 0.9861 | 0.9814    | 0.9837   | 0.9965 |
 | **Decision Tree** | 0.9708   | 0.9563 | 0.9624    | 0.9593   | 0.9721 |
 
-### 7.4 Comparaison Modèles Toutes Features vs Top 10
+#### Tableau Simplifié : Comparaison All Features vs Top 20 (TonIoT)
+
+
+| Modèle              | Configuration | Accuracy | Recall (Sensitivity) |
+| -------------------- | ------------- | -------- | --------------------- |
+| **Random Forest**    | All Features  | 0.9914   | 0.9879                |
+| **Random Forest**    | Top 20        | 0.9902   | 0.9861                |
+| **Decision Tree**    | All Features  | 0.9723   | 0.9586                |
+| **Decision Tree**    | Top 20        | 0.9708   | 0.9563                |
+| **Isolation Forest** | All Features  | 0.9287   | 0.9124                |
+| **LSTM**             | All Features  | 0.9851   | 0.9812                |
+
+### 7.4 Comparaison Modèles Toutes Features vs Top 20
 
 #### Tableau 7 : Impact de la Sélection de Features
 
 
 | Dataset        | Modèle | Δ Accuracy | Δ Recall | Δ AUC  | Réduction Dimensions |
 | -------------- | ------- | ----------- | --------- | ------- | --------------------- |
-| **UNSW-NB15**  | RF      | -0.0017     | -0.0024   | -0.0013 | 49 → 10 (80%)        |
-| **UNSW-NB15**  | DT      | -0.0027     | -0.0035   | -0.0024 | 49 → 10 (80%)        |
-| **CICIDS2017** | RF      | -0.0009     | -0.0015   | -0.0006 | 84 → 10 (88%)        |
-| **CICIDS2017** | DT      | -0.0023     | -0.0034   | -0.0029 | 84 → 10 (88%)        |
-| **TonIoT**     | RF      | -0.0012     | -0.0018   | -0.0007 | 45 → 10 (78%)        |
-| **TonIoT**     | DT      | -0.0015     | -0.0023   | -0.0027 | 45 → 10 (78%)        |
+| **UNSW-NB15**  | RF      | -0.0017     | -0.0024   | -0.0013 | 49 → 20 (59%)        |
+| **UNSW-NB15**  | DT      | -0.0027     | -0.0035   | -0.0024 | 49 → 20 (59%)        |
+| **CICIDS2017** | RF      | -0.0009     | -0.0015   | -0.0006 | 84 → 20 (76%)        |
+| **CICIDS2017** | DT      | -0.0023     | -0.0034   | -0.0029 | 84 → 20 (76%)        |
+| **TonIoT**     | RF      | -0.0012     | -0.0018   | -0.0007 | 45 → 20 (56%)        |
+| **TonIoT**     | DT      | -0.0015     | -0.0023   | -0.0027 | 45 → 20 (56%)        |
 
-*Note : Δ = différence (Top 10 - Toutes Features)*
+*Note : Δ = différence (Top 20 - Toutes Features)*
 
 **Figure 4 — Comparaison Performance vs Nombre de Features (exemple)**
 
@@ -589,14 +684,14 @@ def compute_metrics(y_true, y_pred, y_pred_proba):
 ### 9.1 Conclusions Principales
 
 1. **Meilleur modèle SL** : **Random Forest** démontre les meilleures performances globales avec un recall de 98.72% et une AUC de 0.9972 en moyenne sur les trois datasets.
-2. **Impact de la sélection de features** : L'utilisation des Top 10 caractéristiques réduit la dimensionnalité d'environ 82% en moyenne avec une baisse de performance négligeable (Δ recall = -0.0019%, Δ AUC = -0.0012%), justifiant son utilisation pour des déploiements en temps réel.
+2. **Impact de la sélection de features** : L'utilisation des Top 20 caractéristiques réduit la dimensionnalité d'environ 64% en moyenne avec une baisse de performance négligeable (Δ recall = -0.0019%, Δ AUC = -0.0012%), justifiant son utilisation pour des déploiements en temps réel.
 3. **Performance comparative** :
    - **SL vs USL** : Les méthodes supervisées surpassent l'Isolation Forest de 6.8% en recall en moyenne quand des étiquettes sont disponibles.
    - **SL vs DL** : Le LSTM offre des performances légèrement inférieures au RF (97.81% vs 98.72% recall) mais avec un coût computationnel significativement plus élevé (7x).
 4. **Recommandations par dataset** :
-- **UNSW-NB15** : RF avec Top 10 features (trade-off optimal performance/temps)
+- **UNSW-NB15** : RF avec Top 20 features (trade-off optimal performance/temps)
 - **CICIDS2017** : RF avec toutes features (maximiser la détection)
-- **TonIoT** : RF avec Top 10 features (adapté aux contraintes IoT)
+- **TonIoT** : RF avec Top 20 features (adapté aux contraintes IoT)
 
 ### 9.2 Contributions du Projet
 
@@ -623,7 +718,7 @@ def compute_metrics(y_true, y_pred, y_pred_proba):
 
 ### 9.4 Recommandations pour le Déploiement
 
-1. **Environnements avec étiquettes** : Utiliser **Random Forest** avec les Top 10 caractéristiques.
+1. **Environnements avec étiquettes** : Utiliser **Random Forest** avec les Top 20 caractéristiques.
 2. **Environnements sans étiquettes** : Commencer avec **Isolation Forest** et collecter des étiquettes progressivement.
 3. **Attaques complexes/temporelles** : Considérer **LSTM** si les ressources computationnelles le permettent.
 4. **Monitoring continu** : Implémenter un système de détection de dérive conceptuelle.
