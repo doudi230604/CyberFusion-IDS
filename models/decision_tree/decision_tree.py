@@ -12,25 +12,30 @@ from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-# plots helper
-_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
-os.makedirs(_plots_dir, exist_ok=True)
-_plot_counters = {}
-def _savefig(prefix):
-    cnt = _plot_counters.get(prefix, 0) + 1
-    _plot_counters[prefix] = cnt
-    fname = f"{prefix}_fig{cnt}.png"
-    path = os.path.join(_plots_dir, fname)
-    plt.savefig(path, bbox_inches='tight', dpi=150)
-    print(f"Saved figure: {path}")
-    plt.close()
-
 import warnings
 warnings.filterwarnings('ignore')
 
 print("=" * 70)
 print("DECISION TREE ML MODEL - UNSW-NB15 DATASET")
 print("=" * 70)
+
+# =============================================================================
+# SETUP FOR SAVING PLOTS
+# =============================================================================
+# Ensure plots directory exists
+plots_dir = "plots"
+os.makedirs(plots_dir, exist_ok=True)
+_plot_counters = {}
+
+def save_figure_to_plots(prefix):
+    """Save figure to plots directory"""
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    filename = f"{prefix}_fig{cnt}.png"
+    filepath = os.path.join(plots_dir, filename)
+    plt.savefig(filepath, bbox_inches='tight', dpi=150)
+    print(f"   Saved to: {filepath}")
+    plt.close()
 
 # =============================================================================
 # 1. DATA LOADING
@@ -290,7 +295,7 @@ print(f"🏆 Feature Importance Ranking:")
 print(importance_df.to_string(index=False))
 
 # =============================================================================
-# 8. VISUALIZATIONS
+# 8. VISUALIZATIONS (SAVED TO PLOTS/ DIRECTORY)
 # =============================================================================
 print("\n8. VISUALIZATIONS")
 print("-" * 40)
@@ -310,7 +315,7 @@ plot_tree(dt_model,
 plt.title('UNSW-NB15 Decision Tree Model (First 3 Levels)', 
           fontsize=16, fontweight='bold', pad=20)
 plt.tight_layout()
-_savefig('decision_tree')
+save_figure_to_plots('unsw_decision_tree')
 
 # Visualization 2: Feature Importance Bar Chart
 print("📈 Visualization 2: Feature Importance")
@@ -334,7 +339,7 @@ for i, (bar, imp) in enumerate(zip(bars, top_features['Importance'])):
 
 plt.grid(True, alpha=0.3, axis='x')
 plt.tight_layout()
-_savefig('decision_tree')
+save_figure_to_plots('unsw_feature_importance')
 
 # Visualization 3: Confusion Matrix
 print("📈 Visualization 3: Confusion Matrix")
@@ -349,7 +354,7 @@ plt.title('Confusion Matrix - UNSW-NB15 Decision Tree',
 plt.ylabel('True Label', fontsize=12)
 plt.xlabel('Predicted Label', fontsize=12)
 plt.tight_layout()
-_savefig('decision_tree')
+save_figure_to_plots('unsw_confusion_matrix')
 
 # Visualization 4: Performance Metrics Comparison
 print("📈 Visualization 4: Performance Metrics")
@@ -398,7 +403,7 @@ axes[1, 1].set_title('Dataset Class Distribution', fontweight='bold')
 plt.suptitle('UNSW-NB15 Decision Tree Model Performance', 
              fontsize=16, fontweight='bold', y=1.02)
 plt.tight_layout()
-_savefig('decision_tree')
+save_figure_to_plots('unsw_performance_metrics')
 
 # Visualization 5: Model Summary
 print("📈 Visualization 5: Model Summary")
@@ -429,127 +434,10 @@ ax.text(0.1, 0.5, summary_text,
 
 plt.title('Final Model Summary', fontsize=16, fontweight='bold', pad=20)
 plt.tight_layout()
-_savefig('decision_tree')
+save_figure_to_plots('unsw_model_summary')
 
 # =============================================================================
-# 9. MODEL DEPLOYMENT READY FUNCTIONS
-# =============================================================================
-print("\n9. MODEL DEPLOYMENT FUNCTIONS")
-print("-" * 40)
-
-class UNSWIntrusionDetector:
-    """Deployment-ready intrusion detection model"""
-    
-    def __init__(self, model, scaler, feature_names):
-        self.model = model
-        self.scaler = scaler
-        self.feature_names = feature_names
-        
-    def predict_single(self, features):
-        """Predict for a single sample"""
-        if len(features) != len(self.feature_names):
-            raise ValueError(f"Expected {len(self.feature_names)} features, got {len(features)}")
-        
-        # Convert to array and scale
-        features_array = np.array(features).reshape(1, -1)
-        features_scaled = self.scaler.transform(features_array)
-        
-        # Make prediction
-        prediction = self.model.predict(features_scaled)[0]
-        probability = self.model.predict_proba(features_scaled)[0]
-        
-        result = "ATTACK" if prediction == 1 else "NORMAL"
-        confidence = probability[1] if prediction == 1 else probability[0]
-        
-        return result, confidence, prediction
-    
-    def predict_batch(self, features_list):
-        """Predict for multiple samples"""
-        results = []
-        for features in features_list:
-            result, confidence, pred = self.predict_single(features)
-            results.append({
-                'features': features,
-                'prediction': result,
-                'confidence': confidence,
-                'binary_pred': pred
-            })
-        return results
-
-# Create deployment model
-deployment_model = UNSWIntrusionDetector(dt_model, scaler, selected_features)
-
-print("✅ Deployment model created successfully!")
-print(f"\n📋 Model Info:")
-print(f"   Features expected: {len(selected_features)}")
-print(f"   Feature names: {selected_features}")
-
-# Test the deployment model
-print(f"\n🧪 Testing deployment model...")
-test_sample = [X_test[0]]  # First test sample
-result, confidence, binary = deployment_model.predict_single(test_sample[0])
-
-print(f"   Sample prediction: {result}")
-print(f"   Confidence: {confidence:.4f}")
-print(f"   Binary output: {binary}")
-
-# =============================================================================
-# 10. SAVE MODEL AND RESULTS
-# =============================================================================
-print("\n10. SAVING RESULTS")
-print("-" * 40)
-
-# Create results directory
-results_dir = "unsw_nb15_results"
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
-    print(f"✅ Created directory: {results_dir}")
-
-# Save feature importance
-importance_file = os.path.join(results_dir, "feature_importance.csv")
-importance_df.to_csv(importance_file, index=False)
-print(f"✅ Saved feature importance to: {importance_file}")
-
-# Save model performance metrics
-metrics_data = {
-    'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'CV_Mean', 'CV_Std'],
-    'Value': [accuracy, precision, recall, f1, cv_scores.mean(), cv_scores.std()]
-}
-metrics_df = pd.DataFrame(metrics_data)
-metrics_file = os.path.join(results_dir, "model_metrics.csv")
-metrics_df.to_csv(metrics_file, index=False)
-print(f"✅ Saved model metrics to: {metrics_file}")
-
-# Save predictions
-predictions_df = pd.DataFrame({
-    'True_Label': y_test,
-    'Predicted_Label': y_pred,
-    'Prediction_Proba': y_pred_proba
-})
-predictions_file = os.path.join(results_dir, "predictions.csv")
-predictions_df.to_csv(predictions_file, index=False)
-print(f"✅ Saved predictions to: {predictions_file}")
-
-# Save model information
-model_info = {
-    'Dataset': os.path.basename(file_path),
-    'Samples': len(df),
-    'Training_Samples': len(X_train),
-    'Test_Samples': len(X_test),
-    'Features': len(selected_features),
-    'Tree_Depth': dt_model.get_depth(),
-    'Tree_Leaves': dt_model.get_n_leaves(),
-    'Features_Used': str(selected_features)
-}
-model_info_df = pd.DataFrame([model_info])
-model_info_file = os.path.join(results_dir, "model_info.csv")
-model_info_df.to_csv(model_info_file, index=False)
-print(f"✅ Saved model information to: {model_info_file}")
-
-print(f"\n📁 All results saved in: {results_dir}/")
-
-# =============================================================================
-# FINAL SUMMARY
+# 9. FINAL SUMMARY (NO RESULTS SAVED)
 # =============================================================================
 print("\n" + "=" * 70)
 print("🎉 UNSW-NB15 DECISION TREE MODEL - COMPLETE!")
@@ -562,11 +450,8 @@ print(f"   Features used: {len(selected_features)}")
 print(f"   Model accuracy: {accuracy:.4f}")
 print(f"   Attack detection rate: {recall:.4f}")
 print(f"   Model depth: {dt_model.get_depth()} levels")
-print(f"   Results saved in: {results_dir}/")
 
 print(f"\n✅ Decision Tree ML model successfully trained on UNSW-NB15 dataset!")
-print(f"📊 {5} visualizations generated")
-print(f"💾 {4} CSV files saved with results")
-print(f"🚀 Model is deployment-ready!")
+print(f"📊 5 visualizations saved to plots/ directory")
 
 print("\n" + "=" * 70)

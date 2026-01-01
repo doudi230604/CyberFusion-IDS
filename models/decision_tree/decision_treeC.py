@@ -9,19 +9,6 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-import os
-_plots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'plots'))
-os.makedirs(_plots_dir, exist_ok=True)
-_plot_counters = {}
-def _savefig(prefix):
-    cnt = _plot_counters.get(prefix, 0) + 1
-    _plot_counters[prefix] = cnt
-    fname = f"{prefix}_fig{cnt}.png"
-    path = os.path.join(_plots_dir, fname)
-    plt.savefig(path, bbox_inches='tight', dpi=150)
-    print(f"Saved figure: {path}")
-    plt.close()
-
 import seaborn as sns
 import os
 import warnings
@@ -462,6 +449,27 @@ print("\n8. VISUALIZATIONS")
 print("-" * 40)
 print("📊 Generating visualizations...")
 
+# =============================================================================
+# MODIFIED: Save to plots/ directory
+# =============================================================================
+import os
+
+# Ensure plots directory exists
+plots_dir = "plots"
+os.makedirs(plots_dir, exist_ok=True)
+
+_plot_counters = {}
+
+def save_figure_to_plots(prefix):
+    """Save figure to plots directory"""
+    cnt = _plot_counters.get(prefix, 0) + 1
+    _plot_counters[prefix] = cnt
+    filename = f"{prefix}_fig{cnt}.png"
+    filepath = os.path.join(plots_dir, filename)
+    plt.savefig(filepath, bbox_inches='tight', dpi=150)
+    print(f"   Saved to: {filepath}")
+    plt.close()
+
 # Visualization 1: Decision Tree Structure
 print("\n📈 Visualization 1: Decision Tree Diagram")
 plt.figure(figsize=(20, 12))
@@ -476,7 +484,7 @@ plot_tree(dt_model,
 plt.title('CICIDS2017 Decision Tree Model (First 3 Levels)', 
           fontsize=16, fontweight='bold', pad=20)
 plt.tight_layout()
-_savefig('decision_treeC')
+save_figure_to_plots('cicids2017_decision_tree')
 
 # Visualization 2: Feature Importance Bar Chart
 print("📈 Visualization 2: Feature Importance")
@@ -500,7 +508,7 @@ for i, (bar, imp) in enumerate(zip(bars, top_features['Importance'])):
 
 plt.grid(True, alpha=0.3, axis='x', linestyle='--')
 plt.tight_layout()
-_savefig('decision_treeC')
+save_figure_to_plots('cicids2017_feature_importance')
 
 # Visualization 3: Confusion Matrix
 print("📈 Visualization 3: Confusion Matrix")
@@ -516,7 +524,7 @@ plt.title('Confusion Matrix - CICIDS2017 Decision Tree',
 plt.ylabel('True Label', fontsize=13, fontweight='bold')
 plt.xlabel('Predicted Label', fontsize=13, fontweight='bold')
 plt.tight_layout()
-_savefig('decision_treeC')
+save_figure_to_plots('cicids2017_confusion_matrix')
 
 # Visualization 4: Performance Metrics
 print("📈 Visualization 4: Performance Metrics")
@@ -527,151 +535,4 @@ axes[0].bar(['Accuracy'], [accuracy], color='green', alpha=0.8, width=0.5)
 axes[0].set_ylim(0, 1.0)
 axes[0].set_title('Accuracy', fontsize=14, fontweight='bold')
 axes[0].set_ylabel('Score')
-axes[0].text(0, accuracy + 0.02, f'{accuracy:.4f}', 
-            ha='center', fontweight='bold', fontsize=12)
-axes[0].grid(True, alpha=0.3)
-
-# Precision and Recall
-metrics = ['Precision', 'Recall']
-values = [precision, recall]
-colors_pr = ['blue', 'orange']
-
-bars_pr = axes[1].bar(metrics, values, color=colors_pr, alpha=0.8, width=0.6)
-axes[1].set_ylim(0, 1.0)
-axes[1].set_title('Precision & Recall', fontsize=14, fontweight='bold')
-axes[1].set_ylabel('Score')
-for i, (bar, value) in enumerate(zip(bars_pr, values)):
-    axes[1].text(i, value + 0.02, f'{value:.4f}', 
-                ha='center', fontweight='bold', fontsize=11)
-axes[1].grid(True, alpha=0.3)
-
-# F1-Score
-axes[2].bar(['F1-Score'], [f1], color='purple', alpha=0.8, width=0.5)
-axes[2].set_ylim(0, 1.0)
-axes[2].set_title('F1-Score', fontsize=14, fontweight='bold')
-axes[2].set_ylabel('Score')
-axes[2].text(0, f1 + 0.02, f'{f1:.4f}', 
-            ha='center', fontweight='bold', fontsize=12)
-axes[2].grid(True, alpha=0.3)
-
-plt.suptitle('CICIDS2017 Decision Tree Performance Metrics', 
-             fontsize=16, fontweight='bold', y=1.05)
-plt.tight_layout()
-_savefig('decision_treeC')
-
-# Visualization 5: Model Summary
-print("📈 Visualization 5: Model Summary")
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.axis('off')
-
-summary_text = "CICIDS2017 DECISION TREE MODEL SUMMARY\n"
-summary_text += "=" * 40 + "\n\n"
-summary_text += f"📊 Dataset: {os.path.basename(file_path)}\n"
-summary_text += f"📈 Samples: {len(df):,}\n"
-summary_text += f"🎯 Classes: Benign vs Attack\n"
-summary_text += f"🔧 Features: {len(selected_features)}\n\n"
-summary_text += "🏆 PERFORMANCE:\n"
-summary_text += f"   • Accuracy:  {accuracy:.4f}\n"
-summary_text += f"   • Precision: {precision:.4f}\n"
-summary_text += f"   • Recall:    {recall:.4f}\n"
-summary_text += f"   • F1-Score:  {f1:.4f}\n\n"
-summary_text += "🌳 TREE INFO:\n"
-summary_text += f"   • Depth:     {dt_model.get_depth()}\n"
-summary_text += f"   • Leaves:    {dt_model.get_n_leaves()}\n\n"
-summary_text += "✅ Model successfully trained!"
-
-ax.text(0.1, 0.5, summary_text, 
-        fontsize=11, 
-        verticalalignment='center',
-        bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
-
-plt.title('CICIDS2017 Model Summary', fontsize=16, fontweight='bold', pad=20)
-plt.tight_layout()
-_savefig('decision_treeC')
-
-# =============================================================================
-# 9. MODEL DEPLOYMENT
-# =============================================================================
-print("\n9. MODEL DEPLOYMENT READY")
-print("-" * 40)
-
-class CICIDSIntrusionDetector:
-    """Deployment-ready intrusion detection model"""
-    
-    def __init__(self, model, scaler, feature_names):
-        self.model = model
-        self.scaler = scaler
-        self.feature_names = feature_names
-        
-    def predict(self, features):
-        """Predict for a single sample"""
-        if len(features) != len(self.feature_names):
-            raise ValueError(f"Expected {len(self.feature_names)} features, got {len(features)}")
-        
-        # Convert to array and scale
-        features_array = np.array(features).reshape(1, -1)
-        features_scaled = self.scaler.transform(features_array)
-        
-        # Make prediction
-        prediction = self.model.predict(features_scaled)[0]
-        probability = self.model.predict_proba(features_scaled)[0]
-        
-        result = "ATTACK" if prediction == 1 else "BENIGN"
-        confidence = probability[1] if prediction == 1 else probability[0]
-        
-        return result, confidence, prediction
-
-# Create deployment model
-deployment_model = CICIDSIntrusionDetector(dt_model, scaler, selected_features)
-print("✅ Deployment model created!")
-
-# =============================================================================
-# 10. SAVE RESULTS
-# =============================================================================
-print("\n10. SAVING RESULTS")
-print("-" * 40)
-
-# Create results directory
-results_dir = "cicids2017_results"
-if not os.path.exists(results_dir):
-    os.makedirs(results_dir)
-    print(f"✅ Created directory: {results_dir}")
-
-# Save feature importance
-importance_file = os.path.join(results_dir, "feature_importance.csv")
-importance_df.to_csv(importance_file, index=False)
-print(f"✅ Saved feature importance to: {importance_file}")
-
-# Save predictions
-predictions_df = pd.DataFrame({
-    'True_Label': y_test,
-    'Predicted_Label': y_pred,
-    'Prediction_Proba': y_pred_proba
-})
-predictions_file = os.path.join(results_dir, "predictions.csv")
-predictions_df.to_csv(predictions_file, index=False)
-print(f"✅ Saved predictions to: {predictions_file}")
-
-print(f"\n📁 All results saved in: {results_dir}/")
-
-# =============================================================================
-# FINAL SUMMARY
-# =============================================================================
-print("\n" + "=" * 70)
-print("🎉 CICIDS2017 DECISION TREE MODEL - COMPLETE!")
-print("=" * 70)
-
-print(f"\n📋 FINAL SUMMARY:")
-print(f"   Dataset: {os.path.basename(file_path)}")
-print(f"   Total samples: {len(df):,}")
-print(f"   Features used: {len(selected_features)}")
-print(f"   Model accuracy: {accuracy:.4f}")
-print(f"   Attack detection rate: {recall:.4f}")
-print(f"   Model depth: {dt_model.get_depth()} levels")
-print(f"   Results saved in: {results_dir}/")
-
-print(f"\n✅ Decision Tree ML model successfully trained on CICIDS2017!")
-print(f"📊 {5} visualizations generated")
-print(f"💾 Results saved to CSV files")
-
-print("\n" + "=" * 70)
+axes
